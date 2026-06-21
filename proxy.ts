@@ -5,7 +5,7 @@ const PUBLIC_ROUTES = ["/auth/login", "/auth/forgot", "/auth/otp", "/auth/reset"
 
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
-  const token = await getToken({ req: request });
+  const token = await getToken({ req: request, secret: process.env.NEXTAUTH_SECRET });
   const isPublic = PUBLIC_ROUTES.some((route) => pathname.startsWith(route));
 
   if (!token && !isPublic) {

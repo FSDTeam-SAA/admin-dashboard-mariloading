@@ -11,17 +11,18 @@ import { Input } from "@/components/ui/input";
 import { api, apiErrorMessage } from "@/lib/api";
 
 export function LoginForm() {
-  const router = useRouter();
   const params = useSearchParams();
   const [loading, setLoading] = useState(false);
 
   async function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const form = new FormData(event.currentTarget);
+    const callbackUrl = getSafeCallbackUrl(params.get("callbackUrl"));
     setLoading(true);
     const result = await signIn("credentials", {
       email: form.get("email"),
       password: form.get("password"),
+      callbackUrl,
       redirect: false,
     });
     setLoading(false);
@@ -32,7 +33,7 @@ export function LoginForm() {
     }
 
     toast.success("Login successful");
-    router.push(params.get("callbackUrl") || "/");
+    window.location.assign(getSafeCallbackUrl(result?.url || callbackUrl));
   }
 
   return (
@@ -231,4 +232,16 @@ function PasswordInput(props: React.ComponentProps<typeof Input>) {
       </button>
     </div>
   );
+}
+
+function getSafeCallbackUrl(value?: string | null) {
+  if (!value) return "/";
+
+  try {
+    const url = new URL(value, window.location.origin);
+    if (url.origin !== window.location.origin) return "/";
+    return `${url.pathname}${url.search}${url.hash}`;
+  } catch {
+    return value.startsWith("/") && !value.startsWith("//") ? value : "/";
+  }
 }
